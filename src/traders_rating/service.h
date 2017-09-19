@@ -10,24 +10,25 @@ namespace traders_rating {
 
 using user_id_t = uint64_t;
 using amount_t = double;
+using user_name_t = std::string;
 
-enum class cmd_type_t {
-    user_registered,
-    user_renamed,
-    user_connected,
-    user_disconnected,
-    user_deal_won
+struct cmd {
+  public:
+    virtual ~cmd() {};
+    virtual void handle() = 0;
+};
+using cmd_ptr_t = std::unique_ptr<cmd>;
+
+struct user_registered : public cmd {
+  user_id_t id;
+  user_name_t user_name;
+  void handle() override;
 };
 
-struct user_cmd_t {
-    user_id_t user_id;
-    cmd_type_t cmd_type;
-    std::string user_name;
-};
-
-struct deal_cmd_t {
-    user_id_t user_id;
-    amount_t amount;
+struct user_deal_won : public cmd {
+  user_id_t id;
+  amount_t amount;
+  void handle() override;
 };
 
 class week_rating {
@@ -69,6 +70,12 @@ class service {
   time_t this_week_start_;
   time_t this_week_finish_;
   week_rating this_week_rating_;
+  std::mutex mt_;
+  struct wrapped_cmd_ptr_t {
+    cmd_ptr_t ptr;
+    char pad[64-sizeof(cmd_ptr_t)];
+  };
+  boost::circular_buffer<cmd_ptr_t> cmds_;
 };
 
 }
