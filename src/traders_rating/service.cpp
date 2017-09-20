@@ -16,7 +16,7 @@ tr::service::service() : finish_(false) {
  *
  */
 void tr::service::start() {
-
+  th_ = std::thread();
 }
 
 /*
