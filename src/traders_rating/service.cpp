@@ -95,6 +95,7 @@ void tr::service::execute() {
 
     auto optional_cmd = get_cmd();
     if (!optional_cmd.first) {
+      std::this_thread::yield();
       continue;
     }
 
