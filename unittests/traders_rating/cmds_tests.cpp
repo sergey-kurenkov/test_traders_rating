@@ -9,7 +9,7 @@
 namespace tr = ::traders_rating;
 
 struct UserRegisteredTest : public ::testing::Test {
-	user_registered_test() {
+	UserRegisteredTest() {
 		using namespace std::placeholders;
 		test_callback_ = std::bind(&UserRegisteredTest::test_callback, this, _1, _2);
 	}
