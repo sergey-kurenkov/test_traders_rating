@@ -155,7 +155,7 @@ void tr::service::get_connected_users(std::vector<user_id_t>& users) {
  *
  */
 tr::week_rating::week_rating(time_t start, time_t finish,
-                             get_connected_handler get_connected)
+                             get_connected_callback get_connected)
     : start_ts_(start),
       finish_ts_(finish),
       finish_thread_(false),
