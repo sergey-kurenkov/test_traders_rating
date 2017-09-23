@@ -8,7 +8,7 @@
  */
 namespace tr = ::traders_rating;
 
-struct user_registered_test : public ::testing::Test {
+struct UserRegisteredTest : public ::testing::Test {
 	user_registered_test() {
 		using namespace std::placeholders;
 		test_callback_ = std::bind(&user_registered_test::test_callback, this, _1, _2);
@@ -21,6 +21,6 @@ struct user_registered_test : public ::testing::Test {
 	tr::user_registered_callback test_callback_;
 };
 
-TEST(user_registered_test, constuctor) {
+TEST(UserRegisteredTest, Constuctor) {
 	tr::user_registered cmd(1, "test", test_callback_);
 }
