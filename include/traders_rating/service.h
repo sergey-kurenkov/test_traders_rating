@@ -55,11 +55,11 @@ using minute_rating_uptr = std::unique_ptr<minute_rating>;
 /*
  *
  */
-using get_connected_handler = std::function<void(std::vector<user_id_t>&)>;
+using get_connected_callback = std::function<void(std::vector<user_id_t>&)>;
 
 class week_rating {
  public:
-  week_rating(time_t start, time_t finish, get_connected_handler);
+  week_rating(time_t start, time_t finish, get_connected_callback);
   void start();
   void stop();
   void on_minute(minute_rating_uptr);
@@ -84,7 +84,7 @@ class week_rating {
   minute_ratings_t minute_ratings_;
   rating_by_amount_t rating_by_amount_;
   user_won_amount_t user_won_amount_;
-  get_connected_handler get_connected_handler_;
+  get_connected_callback get_connected_callback_;
 
  private:
   void update_week_rating(const minute_rating& mr);
@@ -127,12 +127,12 @@ class service {
   minute_rating_uptr this_minute_rating_;
   archive_week_ratings_t archive_week_ratings_;
 
-  user_registered_handler user_registered_handler_;
-  user_renamed_handler user_renamed_handler_;
-  user_connected_handler user_connected_handler_;
-  user_disconnected_handler user_disconnected_handler_;
-  user_deal_won_handler user_deal_won_handler_;
-  get_connected_handler get_connected_handler_;
+  user_registered_callback user_registered_callback_;
+  user_renamed_callback user_renamed_callback_;
+  user_connected_callback user_connected_callback_;
+  user_disconnected_callback user_disconnected_callback_;
+  user_deal_won_callback user_deal_won_callback_;
+  get_connected_callback get_connected_callback_;
 
   registered_users_t registered_users_;
   connected_users_t connected_users_;

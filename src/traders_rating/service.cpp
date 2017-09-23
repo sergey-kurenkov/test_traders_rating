@@ -14,17 +14,17 @@ using lock_guard_t = std::lock_guard<std::mutex>;
  */
 tr::service::service() : finish_thread_(false) {
   using namespace std::placeholders;
-  user_registered_handler_ =
+  user_registered_callback_ =
       std::bind(&service::process_user_registered, this, _1, _2);
-  user_renamed_handler_ =
+  user_renamed_callback_ =
       std::bind(&service::process_user_renamed, this, _1, _2);
-  user_connected_handler_ =
+  user_connected_callback_ =
       std::bind(&service::process_user_connected, this, _1);
-  user_disconnected_handler_ =
+  user_disconnected_callback_ =
       std::bind(&service::process_user_disconnected, this, _1);
-  user_deal_won_handler_ =
+  user_deal_won_callback_ =
       std::bind(&service::process_user_deal_won, this, _1, _2, _3);
-  get_connected_handler_ = std::bind(&service::get_connected_users, this, _1);
+  get_connected_callback_ = std::bind(&service::get_connected_users, this, _1);
 }
 
 void tr::service::start() {
@@ -60,18 +60,18 @@ std::pair<bool, tr::cmd_uptr> tr::service::get_cmd() {
 }
 
 void tr::service::on_user_registered(user_id_t id, const user_name_t& name) {
-  add_cmd(cmd_uptr(new user_registered(id, name, user_registered_handler_)));
+  add_cmd(cmd_uptr(new user_registered(id, name, user_registered_callback_)));
 }
 
 void tr::service::on_user_renamed(user_id_t id, const user_name_t& name) {
-  add_cmd(cmd_uptr(new user_renamed(id, name, user_renamed_handler_)));
+  add_cmd(cmd_uptr(new user_renamed(id, name, user_renamed_callback_)));
 }
 
 void tr::service::execute() {
   auto start_ts = time(nullptr);
   auto this_week_times = tr::get_week_times(start_ts);
   this_week_rating_ = week_rating_uptr(new week_rating(
-      this_week_times.first, this_week_times.second, get_connected_handler_));
+      this_week_times.first, this_week_times.second, get_connected_callback_));
   this_week_rating_->start();
 
   auto this_minute_times = tr::get_minute_times(start_ts);
@@ -95,7 +95,7 @@ void tr::service::execute() {
       this_week_times = tr::get_week_times(current_ts);
       this_week_rating_ = week_rating_uptr(
           new week_rating(this_week_times.first, this_week_times.second,
-                          get_connected_handler_));
+                          get_connected_callback_));
       this_week_rating_->start();
     }
 
@@ -159,7 +159,7 @@ tr::week_rating::week_rating(time_t start, time_t finish,
     : start_ts_(start),
       finish_ts_(finish),
       finish_thread_(false),
-      get_connected_handler_(get_connected) {}
+      get_connected_callback_(get_connected) {}
 
 time_t tr::week_rating::start_ts() const { return start_ts_; }
 
@@ -227,7 +227,7 @@ void tr::week_rating::execute() {
 
 void tr::week_rating::send_rating() {
   std::vector<user_id_t> users;
-  get_connected_handler_(users);
+  get_connected_callback_(users);
   for (auto user_id : users) {
   }
 }
