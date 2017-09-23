@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.0)
 project (traders_rating)
-add_executable(traders_rating)
 include_directories("${PROJECT_SOURCE_DIR}/src")
 file(GLOB_RECURSE SOURCES "src/*.cpp")
+add_executable(traders_rating  ${SOURCES})
