@@ -37,12 +37,12 @@ TEST_F(UserRegisteredTest, Constuctor) {
 
 TEST_F(UserRegisteredTest, Callback) {
 	try {
-		cmd_uptr cmd(new tr::user_registered(10, "test11", test_callback_));
+		tr::cmd_uptr cmd(new tr::user_registered(10, "test11", test_callback_));
 		cmd->handle();
 		ASSERT_EQ(called, 1);
 		ASSERT_EQ(user_id, 10);
 		ASSERT_STREQ(user_name.c_str(), "test11");
-	} catch(std::exception&) {
+	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
 }
