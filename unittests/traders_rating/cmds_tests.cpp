@@ -21,6 +21,6 @@ struct UserRegisteredTest : public ::testing::Test {
 	tr::user_registered_callback test_callback_;
 };
 
-TEST(UserRegisteredTest, Constuctor) {
+TEST_F(UserRegisteredTest, Constuctor) {
 	tr::user_registered cmd(1, "test", test_callback_);
 }
