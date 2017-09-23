@@ -14,13 +14,35 @@ struct UserRegisteredTest : public ::testing::Test {
 		test_callback_ = std::bind(&UserRegisteredTest::test_callback, this, _1, _2);
 	}
 
-	void test_callback(tr::user_id_t, tr::user_name_t) {
-
+	void test_callback(tr::user_id_t id, tr::user_name_t name) {
+		called++;
+		user_id = id;
+		user_name = name;
 	}
 
 	tr::user_registered_callback test_callback_;
+	tr::user_id_t user_id = 0;
+	tr::user_name_t	user_name = "";
+	unsigned called = 0;
 };
 
 TEST_F(UserRegisteredTest, Constuctor) {
-	tr::user_registered cmd(1, "test", test_callback_);
+	try {
+		tr::user_registered cmd(1, "test", test_callback_);
+		SUCCEED();
+	} catch(std::exception& e) {
+		FAIL() << e.what();
+	}
+}
+
+TEST_F(UserRegisteredTest, Callback) {
+	try {
+		cmd_uptr cmd(new tr::user_registered(10, "test11", test_callback_));
+		cmd->handle();
+		ASSERT_EQ(called, 1);
+		ASSERT_EQ(user_id, 10);
+		ASSERT_STREQ(user_name.c_str(), "test11");
+	} catch(std::exception&) {
+		FAIL() << e.what();
+	}
 }
