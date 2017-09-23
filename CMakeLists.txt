@@ -9,7 +9,7 @@ include_directories("include")
 file(GLOB_RECURSE SOURCES "src/*.cpp" "include/*.h")
 add_executable(traders_rating  ${SOURCES})
 
-file(GLOB_RECURSE UNITTESTS_SOURCES "unittests/*.cpp" "include/*.h")
+file(GLOB_RECURSE UNITTESTS_SOURCES "unittests/*.cpp" "src/traders_rating/*.cpp" "include/*.h")
 add_executable(traders_rating_unit_tests  ${UNITTESTS_SOURCES})
 target_link_libraries(traders_rating_unit_tests gtest ${CMAKE_THREAD_LIBS_INIT})
 add_test(NAME traders_rating_unit_tests COMMAND traders_rating_unit_tests)
