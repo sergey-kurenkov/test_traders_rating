@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.0)
 project (traders_rating)
 set (CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-include_directories("${PROJECT_SOURCE_DIR}/src")
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+include_directories("src")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 add_executable(traders_rating  ${SOURCES})
