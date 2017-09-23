@@ -22,5 +22,5 @@ struct user_registered_test : public ::testing::Test {
 };
 
 TEST(user_registered_test, constuctor) {
-	cmd = tr::user_registered_test(1, "test", test_callback_);
+	tr::user_registered_test cmd(1, "test", test_callback_);
 }
