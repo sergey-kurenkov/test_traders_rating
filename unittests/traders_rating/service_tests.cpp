@@ -17,7 +17,7 @@ TEST(ServiceTest, StartStop) {
 	try {
 		tr::service srv;
 		srv.start();
-		srt.stop();
+		srv.stop();
 	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
