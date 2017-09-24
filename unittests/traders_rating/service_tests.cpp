@@ -2,6 +2,7 @@
 
 #include "traders_rating/cmds.h"
 #include "traders_rating/service.h"
+#include "traders_rating/utilities.h"
 
 namespace tr = ::traders_rating;
 
