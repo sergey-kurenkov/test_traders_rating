@@ -87,3 +87,21 @@ TEST(UserConnectedTest, Callback) {
 		FAIL() << e.what();
 	}
 }
+
+TEST(UserDisconnectedTest, Callback) {
+	try {
+		tr::user_id_t test_id = 0;
+		unsigned called = 0;
+
+		tr::cmd_uptr cmd(new tr::user_disconnected(20, 
+			[&](tr::user_id_t id){
+				test_id = id;
+				++called;
+			}));
+		cmd->handle();
+		ASSERT_EQ(called, 1);
+		ASSERT_EQ(test_id, 20);
+	} catch(std::exception& e) {
+		FAIL() << e.what();
+	}
+}
