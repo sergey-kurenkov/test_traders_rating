@@ -12,7 +12,8 @@ using lock_guard_t = std::lock_guard<std::mutex>;
 /*
  *
  */
-tr::service::service() : finish_thread_(false) {
+tr::service::service(tr::upload_result_callback callback) 
+  : finish_thread_(false), upload_result_callback_(callback) {
   using namespace std::placeholders;
   user_registered_callback_ =
       std::bind(&service::process_user_registered, this, _1, _2);
@@ -159,11 +160,13 @@ void tr::service::get_connected_users(std::vector<user_id_t>& users) {
  *
  */
 tr::week_rating::week_rating(time_t start, time_t finish,
-                             get_connected_callback get_connected)
+                             get_connected_callback get_connected,
+                             upload_result_callback upload_result_callback_f)
     : start_ts_(start),
       finish_ts_(finish),
       finish_thread_(false),
-      get_connected_callback_(get_connected) {}
+      get_connected_callback_(get_connected),
+      upload_result_callback_(upload_result_callback_f) {}
 
 time_t tr::week_rating::start_ts() const { return start_ts_; }
 

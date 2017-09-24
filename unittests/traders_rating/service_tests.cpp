@@ -6,9 +6,22 @@
 
 namespace tr = ::traders_rating;
 
+struct test_get_rating_result {
+	test_get_rating_result() {
+		using std::placeholders;
+		callback = (std::bind(&test_get_rating_result::upload, this, _1));
+	}
+	void upload(rating_result_t& arg) {
+		res = arg;
+	}
+	tr::rating_result_t res;
+	tr::rating_result_callback callback;
+};
+
 TEST(ServiceTest, Create) {
 	try {
-		tr::service srv;
+		test_get_rating_result result;
+		tr::service srv(result.callback);
 	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
@@ -16,7 +29,8 @@ TEST(ServiceTest, Create) {
 
 TEST(ServiceTest, DISABLED_StartStop) {
 	try {
-		tr::service srv;
+		test_get_rating_result result;
+		tr::service srv(result.callback);
 		srv.start();
 		srv.stop();
 	} catch(std::exception& e) {
@@ -51,10 +65,12 @@ TEST(WeekRatingTest, Create) {
 	try {
 		auto ts = time(nullptr);
 		auto week_ts = tr::get_week_times(ts);
+		test_get_rating_result result;
+
 		tr::week_rating rating(week_ts.first, week_ts.second, 
 			[](std::vector<tr::user_id_t>&){
 				
-			});
+			}, result.callback);
 	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
@@ -68,12 +84,13 @@ struct WeekRatingHelper : public ::testing::Test {
 		callback = [](std::vector<tr::user_id_t>&) {
 
 		};
-		rating.reset(new tr::week_rating(week_ts.first, week_ts.second, callback));
+		rating.reset(new tr::week_rating(week_ts.first, week_ts.second, callback, result.callback));
 	}
 
 	time_t start_ts;
 	std::pair<time_t, time_t> week_ts;
 	tr::get_connected_callback callback;
+	test_get_rating_result result;
 	std::unique_ptr<tr::week_rating> rating; 
 };
 

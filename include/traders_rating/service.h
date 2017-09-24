@@ -52,6 +52,18 @@ class minute_rating {
 };
 using minute_rating_uptr = std::unique_ptr<minute_rating>;
 
+struct rating_result_t {
+  using user_result_t = std::pair<user_id_t, amount_t>;
+  using ten_users_t = std::array<user_result_t, 10>;
+
+  ten_users_t top_users;
+  ten_users_t above_users;
+  ten_users_t below_users;
+  user_result_t user_result;
+};
+
+using upload_result_callback = std::function<void(const rating_result_t&)>;
+
 /*
  *
  */
@@ -59,7 +71,7 @@ using get_connected_callback = std::function<void(std::vector<user_id_t>&)>;
 
 class week_rating {
  public:
-  week_rating(time_t start, time_t finish, get_connected_callback);
+  week_rating(time_t start, time_t finish, get_connected_callback, upload_result_callback);
   void start();
   void stop();
   void on_minute(minute_rating_uptr);
@@ -85,6 +97,7 @@ class week_rating {
   rating_by_amount_t rating_by_amount_;
   user_won_amount_t user_won_amount_;
   get_connected_callback get_connected_callback_;
+  upload_result_callback upload_result_callback_;
 
  private:
   void update_week_rating(const minute_rating& mr);
@@ -98,7 +111,7 @@ using week_rating_uptr = std::unique_ptr<week_rating>;
  */
 class service {
  public:
-  service();
+  service(upload_result_callback);
   void start();
   void stop();
 
@@ -136,6 +149,8 @@ class service {
 
   registered_users_t registered_users_;
   connected_users_t connected_users_;
+
+  upload_result_callback upload_result_callback_;
 
  private:
   void execute();
