@@ -62,7 +62,7 @@ TEST(WeekRatingTest, Create) {
 
 struct WeekRatingHelper : public ::testing::Test {
 	WeekRatingHelper() {}
-	create_rating(time_t ts) {
+	void create_rating(time_t ts) {
 		start_ts = ts;
 		week_ts = tr::get_week_times(start_ts);
 		callback = [](std::vector<user_id_t>&) {
