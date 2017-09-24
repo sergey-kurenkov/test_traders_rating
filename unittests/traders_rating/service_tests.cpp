@@ -46,3 +46,16 @@ TEST(MinuteRatingTest, OnUserDealWon) {
 		FAIL() << e.what();
 	}
 }
+
+TEST(WeekRatingTest, Create) {
+	try {
+		auto ts = time(nullptr);
+		auto week_ts = tr::get_week_times(ts);
+		tr::week_rating rating(week_ts.first, week_ts.second, 
+			[](std::vector<user_id_t>&){
+				
+			});
+	} catch(std::exception& e) {
+		FAIL() << e.what();
+	}
+}
