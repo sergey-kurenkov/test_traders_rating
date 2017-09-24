@@ -107,6 +107,10 @@ void tr::service::execute() {
 
     optional_cmd.second->handle();
   }
+  this_week_rating_->stop();
+  for(auto & p : archive_week_ratings_) {
+    p.second->stop();
+  }
 }
 
 void tr::service::process_user_registered(user_id_t id,
