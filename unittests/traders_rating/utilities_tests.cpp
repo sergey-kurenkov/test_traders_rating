@@ -13,7 +13,7 @@ TEST(GetMinuteTimeTest, Test1)  {
 		tm ts_tm = *localtime(&ts);
 		auto res = tr::get_minute_times(ts);
 		ASSERT_EQ(res.first, ts - ts_tm.tm_sec);
-		ASSERT_EQ(res.first, ts - ts_tm.tm_sec + 60);
+		ASSERT_EQ(res.second, ts - ts_tm.tm_sec + 60);
 	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
