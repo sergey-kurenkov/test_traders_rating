@@ -105,13 +105,13 @@ TEST(UserDisconnectedTest, Callback) {
 
 TEST(UserDealWonTest, Callback) {
 	try {
-		time_t ts = time(nullptr);
+		time_t test_ts = time(nullptr);
 		tr::user_id_t test_id = 0;
 		tr::amount_t test_amount = 0.;
 		unsigned called = 0;
 
-		tr::cmd_uptr cmd(new tr::user_deal_won(ts, 20, 25.1,
-			[&](tr::user_id_t id, tr::amount_t amount){
+		tr::cmd_uptr cmd(new tr::user_deal_won(test_ts, 20, 25.1,
+			[&](time_t, tr::user_id_t id, tr::amount_t amount) {
 				test_id = id;
 				test_amount = amount;
 				++called;
