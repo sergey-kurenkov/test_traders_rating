@@ -105,3 +105,24 @@ TEST(UserDisconnectedTest, Callback) {
 		FAIL() << e.what();
 	}
 }
+
+TEST(UserDealWonTest, Callback) {
+	try {
+		tr::user_id_t test_id = 0;
+		tr::amount_t test_amount = 0.;
+		unsigned called = 0;
+
+		tr::cmd_uptr cmd(new tr::user_disconnected(20, 25.1,
+			[&](tr::user_id_t id, tr::amount_t amount){
+				test_id = id;
+				test_amount = amount;
+				++called;
+			}));
+		cmd->handle();
+		ASSERT_EQ(called, 1);
+		ASSERT_EQ(test_id, 20);
+		ASSERT_EQ(test_amount, 25.1);
+	} catch(std::exception& e) {
+		FAIL() << e.what();
+	}
+}
