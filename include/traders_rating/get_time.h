@@ -1,5 +1,5 @@
-#ifndef TR_UTILITIES_GET_TIME_H
-#define TR_UTILITIES_GET_TIME_H
+#ifndef traders_rating_get_time_h
+#define traders_rating_get_time_h
 
 #include <ctime>
 #include <utility>
@@ -8,7 +8,8 @@ namespace traders_rating {
 
 std::pair<time_t, time_t> get_week_times(time_t ts);
 std::pair<time_t, time_t> get_minute_times(time_t ts);
+void yield_thread();
 
 }  // namespace traders_rating
 
-#endif  // TR_UTILITIES_GET_TIME_H
+#endif  // traders_rating_get_time_h

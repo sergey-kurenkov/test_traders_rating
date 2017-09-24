@@ -3,9 +3,6 @@
 #include "traders_rating/cmds.h"
 #include "traders_rating/service.h"
 
-/*
- *
- */
 namespace tr = ::traders_rating;
 
 struct UserRegisteredTest : public ::testing::Test {
