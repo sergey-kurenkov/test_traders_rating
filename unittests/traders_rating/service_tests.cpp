@@ -14,22 +14,10 @@ TEST(ServiceTest, Create) {
 	}
 }
 
-TEST(ServiceTest, StartStop) {
-	try {
-		tr::service srv;
-		srv.start();
-		srv.stop();
-	} catch(std::exception& e) {
-		FAIL() << e.what();
-	}
-}
-
 TEST(ServiceTest, DISABLED_StartStop) {
 	try {
 		tr::service srv;
 		srv.start();
-		std::chrono::seconds wait_interval(1);
-		std::this_thread::sleep_for(wait_interval);
 		srv.stop();
 	} catch(std::exception& e) {
 		FAIL() << e.what();
