@@ -31,7 +31,7 @@ class minute_rating {
     explicit iterator(user_won_amount_t::const_iterator itr) : itr_(itr) {}
     const value_type operator*() const { return *itr_; }
     bool operator!=(iterator other) const { return itr_ != other.itr_; }
-    iterator& operator++() { return ++itr_; }
+    iterator& operator++() { ++itr_; return *this; }
 
    private:
     user_won_amount_t::const_iterator itr_;
