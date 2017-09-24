@@ -101,7 +101,7 @@ void tr::service::execute() {
 
     auto optional_cmd = get_cmd();
     if (!optional_cmd.first) {
-      std::this_thread::yield();
+      tr::yield_thread()
       continue;
     }
 
@@ -290,25 +290,6 @@ tr::minute_rating::iterator tr::minute_rating::end() const {
 /*
  *
  */
-tr::minute_rating::iterator::iterator(
-    tr::minute_rating::user_won_amount_t::const_iterator itr)
-    : itr_(itr) {}
-
-const tr::minute_rating::value_type tr::minute_rating::iterator::operator*()
-    const {
-  return *itr_;
-}
-
-bool tr::minute_rating::iterator::operator!=(tr::minute_rating::iterator other)
-    const {
-  return itr_ != other.itr_;
-}
-
-tr::minute_rating::iterator& tr::minute_rating::iterator::operator++() {
-  ++itr_;
-  return *this;
-}
-
 time_t tr::minute_rating::start_ts() const { return start_ts_; }
 
 time_t tr::minute_rating::finish_ts() const { return finish_ts_; }

@@ -4,7 +4,7 @@ include(gtest.cmake)
 find_package (Threads)
 enable_testing()
 
-set (CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "-std=c++11 -pthread ${CMAKE_CXX_FLAGS}")
 include_directories("include")
 file(GLOB_RECURSE SOURCES "src/*.cpp" "include/*.h")
 add_executable(traders_rating  ${SOURCES})

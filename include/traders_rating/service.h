@@ -28,10 +28,10 @@ class minute_rating {
  public:
   class iterator : public std::iterator<std::input_iterator_tag, value_type> {
    public:
-    explicit iterator(user_won_amount_t::const_iterator itr);
-    const value_type operator*() const;
-    bool operator!=(iterator other) const;
-    iterator& operator++();
+    explicit iterator(user_won_amount_t::const_iterator itr) : itr_(itr) {}
+    const value_type operator*() const { return *itr_; }
+    bool operator!=(iterator other) const { return itr_ != other.itr_; }
+    iterator& operator++() { return ++itr_; }
 
    private:
     user_won_amount_t::const_iterator itr_;

@@ -1,10 +1,12 @@
 #include "traders_rating/utilities.h"
 
 #include <ctime>
-#include <time.h>
 #include <utility>
 #include <cassert>
 #include <string>
+
+#include <time.h>
+#include <pthread.h>
 
 namespace tr = ::traders_rating;
 
@@ -39,4 +41,8 @@ std::pair<time_t, time_t> tr::get_minute_times(time_t ts) {
     time_t start = ts - this_ts.tm_sec;;
     time_t next_minute_start = start+60;
     return std::make_pair(start, next_minute_start);
+}
+
+void tr::yield_thread() {
+    pthread_yield();
 }
