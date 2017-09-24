@@ -112,7 +112,7 @@ TEST(UserDealWonTest, Callback) {
 		tr::amount_t test_amount = 0.;
 		unsigned called = 0;
 
-		tr::cmd_uptr cmd(new tr::user_disconnected(20, 25.1,
+		tr::cmd_uptr cmd(new tr::user_deal_won(20, 25.1,
 			[&](tr::user_id_t id, tr::amount_t amount){
 				test_id = id;
 				test_amount = amount;
