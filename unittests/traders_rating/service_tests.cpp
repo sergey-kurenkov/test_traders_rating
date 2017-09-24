@@ -77,7 +77,7 @@ struct WeekRatingHelper : public ::testing::Test {
 	std::unique_ptr<tr::week_rating> rating; 
 };
 
-TEST(WeekRatingHelper, StartStop) {
+TEST_F(WeekRatingHelper, StartStop) {
 	try {
 		auto ts = time(nullptr);
 		create_rating(ts);
