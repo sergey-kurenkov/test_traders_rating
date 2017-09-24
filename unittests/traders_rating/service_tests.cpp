@@ -33,3 +33,16 @@ TEST(MinuteRatingTest, Create) {
 		FAIL() << e.what();
 	}
 }
+
+TEST(MinuteRatingTest, OnUserDealWon) {
+	try {
+		auto ts = time(nullptr);
+		auto minute_ts = tr::get_minute_times(ts);
+		tr::minute_rating rating(minute_ts.first, minute_ts.second);
+		rating.on_user_deal_won(ts, 100, 105.1);
+		ASSERT_EQ((*rating.begin()).first, 100);
+		ASSERT_EQ((*rating.begin()).first, 105.1);
+	} catch(std::exception& e) {
+		FAIL() << e.what();
+	}
+}
