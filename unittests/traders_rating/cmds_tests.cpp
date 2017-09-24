@@ -62,8 +62,8 @@ TEST(UserRenameTest, Callback) {
 			}));
 		cmd->handle();
 		ASSERT_EQ(called, 1);
-		ASSERT_EQ(user_id, 20);
-		ASSERT_STREQ(user_name.c_str(), "test12");
+		ASSERT_EQ(test_id, 20);
+		ASSERT_STREQ(test_name.c_str(), "test12");
 	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
