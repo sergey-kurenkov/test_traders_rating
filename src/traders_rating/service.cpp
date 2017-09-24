@@ -205,7 +205,7 @@ void tr::week_rating::execute() {
       // через 1 секунду после окончания минуты функция отправляет рейтинг
       if (current_minute_report_done ||
           current_ts - 1 < current_minute.second) {
-        cv_.wait_for(lk, wait_interval, [](){ return finish_thread_; });
+        cv_.wait_for(lk, wait_interval, [&](){ return finish_thread_; });
         continue;
       }
       lk.unlock();
