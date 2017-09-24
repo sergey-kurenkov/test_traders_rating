@@ -1,5 +1,5 @@
-#ifndef traders_rating_get_time_h
-#define traders_rating_get_time_h
+#ifndef traders_rating_utilities_h
+#define traders_rating_utilities_h
 
 #include <ctime>
 #include <utility>
@@ -12,4 +12,4 @@ void yield_thread();
 
 }  // namespace traders_rating
 
-#endif  // traders_rating_get_time_h
+#endif  // traders_rating_utilities_h

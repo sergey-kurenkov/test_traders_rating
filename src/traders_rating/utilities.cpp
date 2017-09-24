@@ -1,4 +1,4 @@
-#include "traders_rating/get_time.h"
+#include "traders_rating/utilities.h"
 
 #include <ctime>
 #include <time.h>

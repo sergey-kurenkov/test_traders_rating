@@ -1,5 +1,5 @@
 #include "traders_rating/service.h"
-#include "traders_rating/get_time.h"
+#include "traders_rating/utilities.h"
 
 #include <functional>
 #include <cassert>
