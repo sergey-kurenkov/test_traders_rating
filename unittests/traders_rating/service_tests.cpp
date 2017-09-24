@@ -41,7 +41,7 @@ TEST(MinuteRatingTest, OnUserDealWon) {
 		tr::minute_rating rating(minute_ts.first, minute_ts.second);
 		rating.on_user_deal_won(ts, 100, 105.1);
 		ASSERT_EQ((*rating.begin()).first, 100);
-		ASSERT_EQ((*rating.begin()).first, 105.1);
+		ASSERT_EQ((*rating.begin()).second, 105.1);
 	} catch(std::exception& e) {
 		FAIL() << e.what();
 	}
