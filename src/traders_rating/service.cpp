@@ -283,17 +283,6 @@ void tr::minute_rating::on_user_deal_won(time_t ts, user_id_t id, amount_t am) {
   }
 }
 
-tr::minute_rating::iterator tr::minute_rating::begin() const {
-  return tr::minute_rating::iterator(user_won_amount_.begin());
-}
-
-tr::minute_rating::iterator tr::minute_rating::end() const {
-  return tr::minute_rating::iterator(user_won_amount_.end());
-}
-
-/*
- *
- */
 time_t tr::minute_rating::start_ts() const { return start_ts_; }
 
 time_t tr::minute_rating::finish_ts() const { return finish_ts_; }

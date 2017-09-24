@@ -42,8 +42,8 @@ class minute_rating {
   void on_user_deal_won(time_t, user_id_t, amount_t);
   time_t start_ts() const;
   time_t finish_ts() const;
-  iterator begin() const;
-  iterator end() const;
+  iterator begin() const { return iterator(user_won_amount_.begin()); }
+  iterator end() const { return iterator(user_won_amount_.end()); }
 
  private:
   time_t start_ts_;

@@ -59,3 +59,31 @@ TEST(WeekRatingTest, Create) {
 		FAIL() << e.what();
 	}
 }
+
+struct WeekRatingHelper : public ::testing::Test {
+	WeekRatingHelper() {}
+	create_rating(time_t ts) {
+		start_ts = ts;
+		week_ts = tr::get_week_times(start_ts);
+		callback = [](std::vector<user_id_t>&) {
+
+		};
+		rating.reset(new tr::week_rating(week_ts.first, week_ts.second, callback));
+	}
+
+	time_t start_ts;
+	std::pair<time_t, time_t> week_ts;
+	tr::get_connected_callback callback;
+	std::unique_ptr<tr::week_rating> rating; 
+};
+
+TEST(WeekRatingHelper, StartStop) {
+	try {
+		auto ts = time(nullptr);
+		create_rating(ts);
+		rating->start();
+		rating->stop();
+	} catch(std::exception& e) {
+		FAIL() << e.what();
+	}
+}
