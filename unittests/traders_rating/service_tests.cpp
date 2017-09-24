@@ -65,7 +65,7 @@ struct WeekRatingHelper : public ::testing::Test {
 	void create_rating(time_t ts) {
 		start_ts = ts;
 		week_ts = tr::get_week_times(start_ts);
-		callback = [](std::vector<user_id_t>&) {
+		callback = [](std::vector<tr::user_id_t>&) {
 
 		};
 		rating.reset(new tr::week_rating(week_ts.first, week_ts.second, callback));
