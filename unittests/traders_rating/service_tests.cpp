@@ -52,7 +52,7 @@ TEST(WeekRatingTest, Create) {
 		auto ts = time(nullptr);
 		auto week_ts = tr::get_week_times(ts);
 		tr::week_rating rating(week_ts.first, week_ts.second, 
-			[](std::vector<user_id_t>&){
+			[](std::vector<tr::user_id_t>&){
 				
 			});
 	} catch(std::exception& e) {
