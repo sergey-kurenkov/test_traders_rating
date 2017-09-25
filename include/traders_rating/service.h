@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <string>
 #include <map>
+#include <set>
 #include <queue>
 #include <memory>
 #include <mutex>
@@ -31,7 +32,10 @@ class minute_rating {
     explicit iterator(user_won_amount_t::const_iterator itr) : itr_(itr) {}
     const value_type operator*() const { return *itr_; }
     bool operator!=(iterator other) const { return itr_ != other.itr_; }
-    iterator& operator++() { ++itr_; return *this; }
+    iterator& operator++() {
+      ++itr_;
+      return *this;
+    }
 
    private:
     user_won_amount_t::const_iterator itr_;
@@ -53,13 +57,16 @@ class minute_rating {
 using minute_rating_uptr = std::unique_ptr<minute_rating>;
 
 struct rating_result_t {
-  using user_result_t = std::pair<user_id_t, amount_t>;
-  using ten_users_t = std::array<user_result_t, 10>;
+  using user_set_t = std::set<user_id_t>;
+  using rating_t = std::map<amount_t, user_set_t, std::greater<amount_t>>;
 
-  ten_users_t top_users;
-  ten_users_t above_users;
-  ten_users_t below_users;
-  user_result_t user_result;
+  time_t ts;
+  user_id_t user_id;
+  amount_t amount;
+
+  rating_t top_users;
+  rating_t above_users;
+  rating_t below_users;
 };
 
 using upload_result_callback = std::function<void(const rating_result_t&)>;
@@ -68,21 +75,28 @@ using upload_result_callback = std::function<void(const rating_result_t&)>;
  *
  */
 using get_connected_callback = std::function<void(std::vector<user_id_t>&)>;
+using time_function_t = std::function<time_t(time_t*)>;
 
 class week_rating {
  public:
-  week_rating(time_t start, time_t finish, get_connected_callback, upload_result_callback);
+  week_rating(time_t start, time_t finish, get_connected_callback,
+              upload_result_callback);
+  week_rating(time_t start, time_t finish, get_connected_callback,
+              upload_result_callback, time_function_t);
   void start();
   void stop();
   void on_minute(minute_rating_uptr);
   time_t start_ts() const;
+  bool started() const;
+  bool finished() const;
 
  private:
   void execute();
 
  private:
   using same_amount_users_t = std::unordered_set<user_id_t>;
-  using rating_by_amount_t = std::map<amount_t, same_amount_users_t>;
+  using rating_by_amount_t =
+      std::map<amount_t, same_amount_users_t, std::greater<amount_t>>;
   using minute_ratings_t = std::queue<minute_rating_uptr>;
   using user_won_amount_t = std::unordered_map<user_id_t, amount_t>;
 
@@ -98,6 +112,9 @@ class week_rating {
   user_won_amount_t user_won_amount_;
   get_connected_callback get_connected_callback_;
   upload_result_callback upload_result_callback_;
+  time_function_t time_function_;
+  std::atomic_bool thread_started_;
+  std::atomic_bool thread_finished_;
 
  private:
   void update_week_rating(const minute_rating& mr);

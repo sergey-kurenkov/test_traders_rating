@@ -24,7 +24,8 @@ using cmd_uptr = std::unique_ptr<cmd>;
 /*
  *
  */
-using user_registered_callback = std::function<void(user_id_t, const user_name_t&)>;
+using user_registered_callback =
+    std::function<void(user_id_t, const user_name_t&)>;
 
 class user_registered : public cmd {
  public:
@@ -42,7 +43,8 @@ class user_registered : public cmd {
 /*
  *
  */
-using user_renamed_callback = std::function<void(user_id_t, const user_name_t&)>;
+using user_renamed_callback =
+    std::function<void(user_id_t, const user_name_t&)>;
 
 class user_renamed : public cmd {
  public:

@@ -12,8 +12,9 @@ using lock_guard_t = std::lock_guard<std::mutex>;
 /*
  *
  */
-tr::service::service(tr::upload_result_callback callback) 
-  : finish_thread_(false), upload_result_callback_(callback) {
+tr::service::service(tr::upload_result_callback callback)
+    : finish_thread_(false), upload_result_callback_(callback) {
+  lock.clear();
   using namespace std::placeholders;
   user_registered_callback_ =
       std::bind(&service::process_user_registered, this, _1, _2);
@@ -29,12 +30,12 @@ tr::service::service(tr::upload_result_callback callback)
 }
 
 void tr::service::start() {
-  finish_thread_ == false;
+  finish_thread_ = false;
   th_ = std::thread(&tr::service::execute, this);
 }
 
 void tr::service::stop() {
-  finish_thread_ == true;
+  finish_thread_ = true;
   th_.join();
 }
 
@@ -71,8 +72,9 @@ void tr::service::on_user_renamed(user_id_t id, const user_name_t& name) {
 void tr::service::execute() {
   auto start_ts = time(nullptr);
   auto this_week_times = tr::get_week_times(start_ts);
-  this_week_rating_ = week_rating_uptr(new week_rating(
-      this_week_times.first, this_week_times.second, get_connected_callback_));
+  this_week_rating_ = week_rating_uptr(
+      new week_rating(this_week_times.first, this_week_times.second,
+                      get_connected_callback_, upload_result_callback_));
   this_week_rating_->start();
 
   auto this_minute_times = tr::get_minute_times(start_ts);
@@ -96,7 +98,7 @@ void tr::service::execute() {
       this_week_times = tr::get_week_times(current_ts);
       this_week_rating_ = week_rating_uptr(
           new week_rating(this_week_times.first, this_week_times.second,
-                          get_connected_callback_));
+                          get_connected_callback_, upload_result_callback_));
       this_week_rating_->start();
     }
 
@@ -109,7 +111,7 @@ void tr::service::execute() {
     optional_cmd.second->handle();
   }
   this_week_rating_->stop();
-  for(auto & p : archive_week_ratings_) {
+  for (auto& p : archive_week_ratings_) {
     p.second->stop();
   }
 }
@@ -149,7 +151,7 @@ void tr::service::get_connected_users(std::vector<user_id_t>& users) {
   unique_lock_t lk(mt_);
   auto connected_users_size = connected_users_.size();
   lk.unlock();
-  users.reserve(connected_users_size+10);
+  users.reserve(connected_users_size + 10);
   lk.lock();
   for (auto user_id : connected_users_) {
     users.push_back(user_id);
@@ -162,13 +164,27 @@ void tr::service::get_connected_users(std::vector<user_id_t>& users) {
 tr::week_rating::week_rating(time_t start, time_t finish,
                              get_connected_callback get_connected,
                              upload_result_callback upload_result_callback_f)
+    : week_rating(start, finish, get_connected, upload_result_callback_f,
+                  &time) {}
+
+tr::week_rating::week_rating(time_t start, time_t finish,
+                             get_connected_callback get_connected,
+                             upload_result_callback upload_result_callback_f,
+                             time_function_t time_function)
     : start_ts_(start),
       finish_ts_(finish),
       finish_thread_(false),
       get_connected_callback_(get_connected),
-      upload_result_callback_(upload_result_callback_f) {}
+      upload_result_callback_(upload_result_callback_f),
+      time_function_(time_function),
+      thread_started_(false),
+      thread_finished_(false) {}
 
 time_t tr::week_rating::start_ts() const { return start_ts_; }
+
+bool tr::week_rating::started() const { return thread_started_; }
+
+bool tr::week_rating::finished() const { return thread_finished_; }
 
 void tr::week_rating::on_minute(tr::minute_rating_uptr minute_rating) {
   unique_lock_t lk(mt_);
@@ -191,51 +207,116 @@ void tr::week_rating::stop() {
 }
 
 void tr::week_rating::execute() {
+  thread_started_ = true;
+  struct on_finish_t {
+    week_rating* p;
+    ~on_finish_t() { p->thread_finished_ = true; }
+  } on_finish{this};
   std::chrono::seconds wait_interval(1);
-  auto current_minute = get_minute_times(time(nullptr));
-  bool current_minute_report_done = false;
-  // поток сам завершится через 1 минуту после окончания недели
-  auto finish_thread_ts = finish_ts_ + 60;
+  auto current_minute = get_minute_times(time_function_(nullptr));
+  // поток сам завершится через 5 секунду после окончания недели
+  auto finish_thread_ts = finish_ts_ + 5;
   while (!finish_thread_) {
-    auto current_ts = time(nullptr);
+    auto current_ts = time_function_(nullptr);
     if (current_ts > finish_thread_ts) {
       finish_thread_ = true;
       continue;
     }
 
+    minute_ratings_t copy_minute_ratings_;
     unique_lock_t lk(mt_);
-    if (minute_ratings_.empty()) {
-      // через 1 секунду после окончания минуты функция отправляет рейтинг
-      if (current_minute_report_done ||
-          current_ts - 1 < current_minute.second) {
-        cv_.wait_for(lk, wait_interval, [&](){ return !!finish_thread_; });
+    while (!minute_ratings_.empty()) {
+      copy_minute_ratings_.push(std::move(minute_ratings_.front()));
+      minute_ratings_.pop();
+    }
+    lk.unlock();
+
+    while (!copy_minute_ratings_.empty()) {
+      minute_rating& mr = *copy_minute_ratings_.front();
+      if (mr.start_ts() >= start_ts_ && mr.finish_ts() <= finish_ts_) {
+        update_week_rating(mr);
+      }
+      copy_minute_ratings_.pop();
+    }
+
+    // через 1 секунду после окончания минуты функция отправляет рейтинг
+    if (current_ts < current_minute.second + 1) {
+      lk.lock();
+      if (finish_thread_) {
         continue;
       }
-      lk.unlock();
-
-      send_rating();
-      current_minute = get_minute_times(current_ts);
-      current_minute_report_done = false;
+      cv_.wait_for(lk, wait_interval, [&]() { return !!finish_thread_; });
+      continue;
     }
 
-    minute_rating_uptr mr_ptr = std::move(minute_ratings_.front());
-    minute_ratings_.pop();
-    lk.unlock();
-    if (mr_ptr->start_ts() >= start_ts_ && mr_ptr->finish_ts() <= finish_ts_) {
-      update_week_rating(*mr_ptr);
-    }
-    if (!current_minute_report_done && current_ts - 1 > current_minute.second) {
-      send_rating();
-      current_minute = get_minute_times(current_ts);
-      current_minute_report_done = false;
-    }
+    send_rating();
+    current_minute = get_minute_times(current_ts);
   }
 }
 
 void tr::week_rating::send_rating() {
+  auto ts = time_function_(nullptr);
   std::vector<user_id_t> users;
   get_connected_callback_(users);
   for (auto user_id : users) {
+    rating_result_t res;
+    res.ts = ts;
+    res.user_id = user_id;
+    res.amount = 0;
+    auto user_won_amount_itr = user_won_amount_.find(user_id);
+    if (user_won_amount_itr != std::end(user_won_amount_)) {
+      res.amount = user_won_amount_itr->second;
+    } else {
+      continue;
+    }
+
+    // top 10 users
+    {
+      rating_by_amount_t::iterator itr = rating_by_amount_.begin();
+      for (auto i = 0U; i < 10 && i < rating_by_amount_.size(); ++i, ++itr) {
+        auto user_pair = res.top_users.insert(
+            std::make_pair(itr->first, rating_result_t::user_set_t()));
+        rating_result_t::user_set_t& user_set = user_pair.first->second;
+        for (auto k : itr->second) {
+          user_set.insert(k);
+        }
+      }
+    }
+
+    // users above user_id
+    rating_by_amount_t::iterator above_itr =
+        rating_by_amount_.lower_bound(res.amount);
+    if (above_itr != std::begin(rating_by_amount_)) {
+      auto above_total = 0;
+      do {
+        --above_itr;
+        auto user_pair = res.above_users.insert(
+            std::make_pair(above_itr->first, rating_result_t::user_set_t()));
+        rating_result_t::user_set_t& user_set = user_pair.first->second;
+        for (auto k : above_itr->second) {
+          user_set.insert(k);
+        }
+      } while (above_itr != std::begin(rating_by_amount_) &&
+               above_total++ < 10);
+    }
+
+    // users below user_id
+    {
+      rating_by_amount_t::iterator below_itr =
+          rating_by_amount_.upper_bound(res.amount);
+      auto below_total = 0;
+      while (below_itr != rating_by_amount_.end() && below_total < 10) {
+        auto user_pair = res.below_users.insert(
+            std::make_pair(below_itr->first, rating_result_t::user_set_t()));
+        rating_result_t::user_set_t& user_set = user_pair.first->second;
+        for (auto k : below_itr->second) {
+          user_set.insert(k);
+        }
+        ++below_itr;
+      }
+    }
+
+    upload_result_callback_(res);
   }
 }
 

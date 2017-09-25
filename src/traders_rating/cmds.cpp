@@ -27,7 +27,8 @@ void tr::user_renamed::handle() { callback_(id, user_name); }
 /*
  *
  */
-tr::user_connected::user_connected(user_id_t id, user_connected_callback callback)
+tr::user_connected::user_connected(user_id_t id,
+                                   user_connected_callback callback)
     : id(id), callback_(callback) {}
 
 void tr::user_connected::handle() { callback_(id); }
