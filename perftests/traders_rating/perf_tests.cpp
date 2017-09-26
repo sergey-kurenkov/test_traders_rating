@@ -13,7 +13,7 @@ static void BM_MinuteRatingInsert(benchmark::State& state) {
 	tr::user_id_t user_id = 0;
 	tr::user_id_t total_users = 1000000;
 	while (state.KeepRunning()) {
-		rating.on_user_deal(ts, ++user_id % total_users, 1.);
+		rating.on_user_deal_won(ts, ++user_id % total_users, 1.);
 	}
 }
 
