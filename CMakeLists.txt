@@ -5,7 +5,10 @@ find_package (Threads)
 enable_testing()
 
 set (CMAKE_CXX_FLAGS "-std=c++11 -pthread ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 include_directories("include")
+include_directories("benchmark/include")
 file(GLOB_RECURSE SOURCES "src/*.cpp" "include/*.h")
 add_executable(traders_rating  ${SOURCES})
 
@@ -13,3 +16,9 @@ file(GLOB_RECURSE UNITTESTS_SOURCES "unittests/*.cpp" "src/traders_rating/*.cpp"
 add_executable(traders_rating_unit_tests  ${UNITTESTS_SOURCES})
 target_link_libraries(traders_rating_unit_tests gtest ${CMAKE_THREAD_LIBS_INIT})
 add_test(NAME traders_rating_unit_tests COMMAND traders_rating_unit_tests)
+
+file(GLOB_RECURSE PERFTESTS_SOURCES "perftests/*.cpp" "src/traders_rating/*.cpp" "include/*.h")
+add_executable(traders_rating_perf_tests  ${PERFTESTS_SOURCES})
+target_link_libraries(traders_rating_perf_tests benchmark ${CMAKE_THREAD_LIBS_INIT})
+add_test(NAME traders_rating_perf_tests COMMAND traders_rating_perf_tests)
+
