@@ -4,7 +4,7 @@
 #include "traders_rating/cmds.h"
 #include "traders_rating/utilities.h"
 
-using namespace tr = ::traders_rating;
+namespace tr = ::traders_rating;
 
 static void BM_MinuteRatingInsert(benchmark::State& state) {
 	time_t ts = time(nullptr);
