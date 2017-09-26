@@ -12,8 +12,11 @@ using lock_guard_t = std::lock_guard<std::mutex>;
 /*
  *
  */
-tr::service::service(tr::upload_result_callback callback)
-    : finish_thread_(false), upload_result_callback_(callback) {
+tr::service::service(tr::upload_result_callback callback,
+                     time_function_t time_function)
+    : finish_thread_(false),
+      time_function_(time_function),
+      upload_result_callback_(callback) {
   lock.clear();
   using namespace std::placeholders;
   user_registered_callback_ =
@@ -69,12 +72,24 @@ void tr::service::on_user_renamed(user_id_t id, const user_name_t& name) {
   add_cmd(cmd_uptr(new user_renamed(id, name, user_renamed_callback_)));
 }
 
+void tr::service::on_user_connected(user_id_t id) {
+  add_cmd(cmd_uptr(new user_connected(id, user_connected_callback_)));
+}
+
+void tr::service::on_user_disconnected(user_id_t id) {
+  add_cmd(cmd_uptr(new user_disconnected(id, user_disconnected_callback_)));
+}
+
+void tr::service::on_user_deal_won(time_t ts, user_id_t id, amount_t amount) {
+  add_cmd(cmd_uptr(new user_deal_won(ts, id, amount, user_deal_won_callback_)));
+}
+
 void tr::service::execute() {
-  auto start_ts = time(nullptr);
+  auto start_ts = time_function_(nullptr);
   auto this_week_times = tr::get_week_times(start_ts);
-  this_week_rating_ = week_rating_uptr(
-      new week_rating(this_week_times.first, this_week_times.second,
-                      get_connected_callback_, upload_result_callback_));
+  this_week_rating_ = week_rating_uptr(new week_rating(
+      this_week_times.first, this_week_times.second, get_connected_callback_,
+      upload_result_callback_, time_function_));
   this_week_rating_->start();
 
   auto this_minute_times = tr::get_minute_times(start_ts);
@@ -82,7 +97,7 @@ void tr::service::execute() {
       new minute_rating(this_minute_times.first, this_minute_times.second));
 
   while (!finish_thread_) {
-    auto current_ts = time(nullptr);
+    auto current_ts = time_function_(nullptr);
 
     if (current_ts >= this_minute_times.second) {
       this_week_rating_->on_minute(std::move(this_minute_rating_));
@@ -96,9 +111,9 @@ void tr::service::execute() {
       archive_week_ratings_.insert(
           std::make_pair(ts, std::move(this_week_rating_)));
       this_week_times = tr::get_week_times(current_ts);
-      this_week_rating_ = week_rating_uptr(
-          new week_rating(this_week_times.first, this_week_times.second,
-                          get_connected_callback_, upload_result_callback_));
+      this_week_rating_ = week_rating_uptr(new week_rating(
+          this_week_times.first, this_week_times.second,
+          get_connected_callback_, upload_result_callback_, time_function_));
       this_week_rating_->start();
     }
 
@@ -122,6 +137,11 @@ void tr::service::process_user_registered(user_id_t id,
   registered_users_.insert(std::make_pair(id, name));
 }
 
+bool tr::service::is_user_registered(user_id_t user_id) const {
+  lock_guard_t lk(mt_);
+  return registered_users_.count(user_id) > 0;
+}
+
 void tr::service::process_user_renamed(user_id_t id, const user_name_t& name) {
   lock_guard_t lk(mt_);
   auto itr = registered_users_.find(id);
@@ -143,6 +163,11 @@ void tr::service::process_user_disconnected(user_id_t id) {
   connected_users_.erase(id);
 }
 
+bool tr::service::is_user_connected(user_id_t user_id) const {
+  lock_guard_t lk(mt_);
+  return connected_users_.count(user_id) > 0;
+}
+
 void tr::service::process_user_deal_won(time_t ts, user_id_t id, amount_t am) {
   this_minute_rating_->on_user_deal_won(ts, id, am);
 }
@@ -161,12 +186,6 @@ void tr::service::get_connected_users(std::vector<user_id_t>& users) {
 /*
  *
  */
-tr::week_rating::week_rating(time_t start, time_t finish,
-                             get_connected_callback get_connected,
-                             upload_result_callback upload_result_callback_f)
-    : week_rating(start, finish, get_connected, upload_result_callback_f,
-                  &time) {}
-
 tr::week_rating::week_rating(time_t start, time_t finish,
                              get_connected_callback get_connected,
                              upload_result_callback upload_result_callback_f,

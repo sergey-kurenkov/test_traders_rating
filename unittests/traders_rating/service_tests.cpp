@@ -11,7 +11,11 @@ struct test_get_rating_result {
       : callback(std::bind(&test_get_rating_result::upload, this,
                            std::placeholders::_1)) {}
   void upload(const tr::rating_result_t& trading_result) {
-    ASSERT_EQ(trading_results.count(trading_result.user_id), 0);
+    if (trading_results.count(trading_result.user_id) > 0) {
+      ASSERT_FALSE(trading_results[trading_result.user_id].ts !=
+                   trading_result.ts);
+      trading_results.erase(trading_result.user_id);
+    }
     trading_results[trading_result.user_id] = trading_result;
   }
   std::unordered_map<tr::user_id_t, tr::rating_result_t> trading_results;
@@ -134,14 +138,14 @@ TEST_F(WeekRatingFixture, StartStop) {
 TEST_F(WeekRatingFixture, StartAfterWeekStop) {
   try {
     auto start_ts = time(nullptr);
-    auto time_funtion = [&](time_t*) {
+    auto time_function = [&](time_t*) {
       auto current_ts = time(nullptr);
       if (current_ts > start_ts + 2) {
         return start_ts + 7 * 24 * 3600;
       }
       return current_ts;
     };
-    create_rating(start_ts, time_funtion);
+    create_rating(start_ts, time_function);
     ASSERT_EQ(rating->started(), false);
     ASSERT_EQ(rating->finished(), false);
     rating->start();
@@ -164,14 +168,14 @@ TEST_F(WeekRatingFixture, OnMinute) {
   try {
     auto start_ts = time(nullptr);
     std::atomic_bool rating_posted(false);
-    auto time_funtion = [&](time_t*) {
+    auto time_function = [&](time_t*) {
       auto current_ts = time(nullptr);
       if (current_ts > start_ts + 1 && rating_posted) {
         return current_ts + 60;
       }
       return current_ts;
     };
-    create_rating(start_ts, time_funtion);
+    create_rating(start_ts, time_function);
     rating->start();
     ASSERT_EQ(result.trading_results.size(), 0);
 
@@ -221,6 +225,168 @@ TEST_F(WeekRatingFixture, OnMinute) {
     ASSERT_EQ(user_30.below_users.size(), 0);
 
     rating->stop();
+  }
+  catch (std::exception& e) {
+    FAIL() << e.what();
+  }
+}
+
+struct ServiceFixture : public ::testing::Test {
+  ServiceFixture() {}
+
+  void create_service() { service_.reset(new tr::service(result.callback)); }
+
+  void create_service(tr::time_function_t time_function) {
+    start_ts = time(nullptr);
+    start_minute_pair = tr::get_minute_times(start_ts);
+    start_minute_ts = start_minute_pair.first;
+
+    service_.reset(new tr::service(result.callback, time_function));
+  }
+
+  time_t start_ts, start_minute_ts;
+  std::pair<time_t, time_t> start_minute_pair;
+  tr::time_function_t time_function;
+
+  test_get_rating_result result;
+  std::unique_ptr<tr::service> service_;
+};
+
+TEST_F(ServiceFixture, StartStop) {
+  try {
+    create_service();
+    service_->start();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    service_->stop();
+  }
+  catch (std::exception& e) {
+    FAIL() << e.what();
+  }
+}
+
+TEST_F(ServiceFixture, OnUserRegistered) {
+  try {
+    create_service();
+    service_->start();
+    ASSERT_FALSE(service_->is_user_registered(100));
+    ASSERT_FALSE(service_->is_user_registered(200));
+    service_->on_user_registered(100, "user #100");
+    service_->on_user_registered(200, "пользователь #200");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(service_->is_user_registered(100));
+    ASSERT_TRUE(service_->is_user_registered(200));
+    service_->stop();
+  }
+  catch (std::exception& e) {
+    FAIL() << e.what();
+  }
+}
+
+TEST_F(ServiceFixture, OnUserRenamed) {
+  try {
+    create_service();
+    service_->start();
+    ASSERT_FALSE(service_->is_user_registered(100));
+    service_->on_user_registered(100, "user #100");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(service_->is_user_registered(100));
+    service_->on_user_renamed(100, "пользователь #100");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(service_->is_user_registered(100));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    service_->stop();
+  }
+  catch (std::exception& e) {
+    FAIL() << e.what();
+  }
+}
+
+TEST_F(ServiceFixture, OnUserConnectedDisconnected) {
+  try {
+    create_service();
+    service_->start();
+    auto user_id = 100;
+    service_->on_user_registered(user_id, "user #100");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_FALSE(service_->is_user_connected(user_id));
+    service_->on_user_connected(user_id);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(service_->is_user_connected(user_id));
+    service_->on_user_disconnected(user_id);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_FALSE(service_->is_user_connected(user_id));
+    service_->stop();
+  }
+  catch (std::exception& e) {
+    FAIL() << e.what();
+  }
+}
+
+TEST_F(ServiceFixture, OnUserDealWon1) {
+  try {
+    std::atomic_int minute_passed{0};
+    time_function = [&](time_t*) {
+      auto current_ts = time(nullptr);
+      auto diff_ts = current_ts - start_ts;
+      return start_minute_ts + 60 * minute_passed + diff_ts;
+    };
+
+    using namespace tr;
+    create_service(time_function);
+    service_->start();
+    ASSERT_EQ(result.trading_results.size(), 0);
+    user_id_t user_id = 100;
+    service_->on_user_registered(user_id, "user #100");
+    service_->on_user_registered(user_id + 1, "user #100");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(service_->is_user_registered(user_id));
+    ASSERT_TRUE(service_->is_user_registered(user_id + 1));
+    service_->on_user_connected(user_id);
+    service_->on_user_connected(user_id + 1);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(service_->is_user_connected(user_id));
+
+    service_->on_user_deal_won(time_function(nullptr), user_id, 100);
+    service_->on_user_deal_won(time_function(nullptr), user_id, 200);
+    service_->on_user_deal_won(time_function(nullptr), user_id, 300.5);
+    ASSERT_TRUE(service_->is_user_connected(user_id));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    minute_passed = 1;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_EQ(result.trading_results.size(), 1);
+    const auto& res = result.trading_results[100];
+    ASSERT_EQ(res.user_id, 100);
+    ASSERT_EQ(res.amount, 600.5);
+
+    result.trading_results.clear();
+    minute_passed = 2;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_EQ(result.trading_results.size(), 1);
+    const auto& res2 = result.trading_results[100];
+    ASSERT_EQ(res2.user_id, 100);
+    ASSERT_EQ(res2.amount, 600.5);
+
+    result.trading_results.clear();
+    service_->on_user_deal_won(time_function(nullptr), user_id, 400.5);
+    service_->on_user_deal_won(time_function(nullptr), user_id + 1, 2000);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    minute_passed = 3;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_EQ(result.trading_results.size(), 2);
+    const auto& res31 = result.trading_results[user_id];
+    ASSERT_EQ(res31.user_id, user_id);
+    ASSERT_EQ(res31.amount, 1001);
+    ASSERT_EQ(res31.top_users.begin()->first, 2000);
+    ASSERT_TRUE(res31.top_users.begin()->second ==
+                rating_result_t::user_set_t{user_id + 1});
+
+    const auto& res32 = result.trading_results[user_id + 1];
+    ASSERT_EQ(res32.user_id, user_id + 1);
+    ASSERT_EQ(res32.amount, 2000);
+    ASSERT_TRUE(res32.top_users.begin()->second ==
+                rating_result_t::user_set_t{user_id + 1});
+
+    service_->stop();
   }
   catch (std::exception& e) {
     FAIL() << e.what();

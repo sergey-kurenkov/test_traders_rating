@@ -80,9 +80,7 @@ using time_function_t = std::function<time_t(time_t*)>;
 class week_rating {
  public:
   week_rating(time_t start, time_t finish, get_connected_callback,
-              upload_result_callback);
-  week_rating(time_t start, time_t finish, get_connected_callback,
-              upload_result_callback, time_function_t);
+              upload_result_callback, time_function_t = &time);
   void start();
   void stop();
   void on_minute(minute_rating_uptr);
@@ -128,7 +126,7 @@ using week_rating_uptr = std::unique_ptr<week_rating>;
  */
 class service {
  public:
-  service(upload_result_callback);
+  service(upload_result_callback, time_function_t = &time);
   void start();
   void stop();
 
@@ -137,6 +135,9 @@ class service {
   void on_user_connected(user_id_t);
   void on_user_disconnected(user_id_t);
   void on_user_deal_won(time_t, user_id_t, amount_t);
+
+  bool is_user_registered(user_id_t) const;
+  bool is_user_connected(user_id_t) const;
 
  private:
   using optional_cmd_t = std::pair<bool, cmd_uptr>;
@@ -149,8 +150,9 @@ class service {
   std::queue<cmd_uptr> cmds_;
   std::thread th_;
   std::atomic_bool finish_thread_;
+  time_function_t time_function_;
 
-  std::mutex mt_;
+  mutable std::mutex mt_;
   std::condition_variable cv_;
 
   week_rating_uptr this_week_rating_;
