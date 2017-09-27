@@ -5,6 +5,7 @@ language: cpp
 
 os:
     - linux
+    - osx
 
 compiler:
     - gcc
@@ -35,7 +36,6 @@ script:
     - cmake .. -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DTARGET_CPU=$TARGET_CPU
     - cmake --build .
     - ctest --verbose
-    # ctest --verbose --output-on-failure
 
 deploy:
     provider:     releases
