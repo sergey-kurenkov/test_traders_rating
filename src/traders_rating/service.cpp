@@ -16,7 +16,8 @@ tr::service::service(tr::upload_result_callback callback,
                      time_function_t time_function)
     : finish_thread_(false),
       time_function_(time_function),
-      upload_result_callback_(callback) {
+      upload_result_callback_(callback),
+      processed_cmds_(0) {
   lock.clear();
   using namespace std::placeholders;
   user_registered_callback_ =
@@ -124,12 +125,15 @@ void tr::service::execute() {
     }
 
     optional_cmd.second->handle();
+    ++processed_cmds_;
   }
   this_week_rating_->stop();
   for (auto& p : archive_week_ratings_) {
     p.second->stop();
   }
 }
+
+uint64_t tr::service::processed_cmds() const { return processed_cmds_; }
 
 void tr::service::process_user_registered(user_id_t id,
                                           const user_name_t& name) {

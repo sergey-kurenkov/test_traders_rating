@@ -138,6 +138,7 @@ class service {
 
   bool is_user_registered(user_id_t) const;
   bool is_user_connected(user_id_t) const;
+  uint64_t processed_cmds() const;
 
  private:
   using optional_cmd_t = std::pair<bool, cmd_uptr>;
@@ -170,6 +171,8 @@ class service {
   connected_users_t connected_users_;
 
   upload_result_callback upload_result_callback_;
+
+  std::atomic_uint_fast64_t processed_cmds_;
 
  private:
   void execute();

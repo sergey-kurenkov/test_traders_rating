@@ -352,7 +352,7 @@ TEST_F(ServiceFixture, OnUserDealWon1) {
     ASSERT_TRUE(service_->is_user_connected(user_id));
     std::this_thread::sleep_for(std::chrono::seconds(1));
     minute_passed = 1;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     ASSERT_EQ(result.trading_results.size(), 1);
     const auto& res = result.trading_results[100];
     ASSERT_EQ(res.user_id, 100);
@@ -360,7 +360,7 @@ TEST_F(ServiceFixture, OnUserDealWon1) {
 
     result.trading_results.clear();
     minute_passed = 2;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     ASSERT_EQ(result.trading_results.size(), 1);
     const auto& res2 = result.trading_results[100];
     ASSERT_EQ(res2.user_id, 100);
@@ -371,7 +371,7 @@ TEST_F(ServiceFixture, OnUserDealWon1) {
     service_->on_user_deal_won(time_function(nullptr), user_id + 1, 2000);
     std::this_thread::sleep_for(std::chrono::seconds(1));
     minute_passed = 3;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     ASSERT_EQ(result.trading_results.size(), 2);
     const auto& res31 = result.trading_results[user_id];
     ASSERT_EQ(res31.user_id, user_id);

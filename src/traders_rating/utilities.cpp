@@ -47,9 +47,9 @@ std::pair<time_t, time_t> tr::get_minute_times(time_t ts) {
   return std::make_pair(start, next_minute_start);
 }
 
-void tr::yield_thread() { 
+void tr::yield_thread() {
 #if defined __linux__
-  pthread_yield(); 
+  pthread_yield();
 #else
   std::this_thread::yield();
 #endif
