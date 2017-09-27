@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.0)
 project (traders_rating)
 include(gtest.cmake)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Enable testing of the benchmark library.")
+add_subdirectory(benchmark)
 find_package (Threads)
 enable_testing()
 
