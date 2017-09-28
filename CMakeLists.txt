@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.0)
 project (traders_rating)
-include(gtest.cmake)
+
+add_subdirectory(gtest)
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Enable testing of the benchmark library.")
 add_subdirectory(benchmark)
 find_package (Threads)
@@ -13,6 +14,7 @@ include_directories("include")
 include_directories("benchmark/include")
 file(GLOB_RECURSE SOURCES "src/*.cpp" "include/*.h")
 add_executable(traders_rating  ${SOURCES})
+target_link_libraries(traders_rating ${CMAKE_THREAD_LIBS_INIT})
 
 file(GLOB_RECURSE UNITTESTS_SOURCES "unittests/*.cpp" "src/traders_rating/*.cpp" "include/*.h")
 add_executable(traders_rating_unit_tests  ${UNITTESTS_SOURCES})

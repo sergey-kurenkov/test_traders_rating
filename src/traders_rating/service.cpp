@@ -44,10 +44,21 @@ void tr::service::stop() {
 }
 
 void tr::service::add_cmd(cmd_uptr cmd) {
-  while (lock.test_and_set(std::memory_order_acquire))
-    ;  // spin
-  cmds_.push(std::move(cmd));
-  lock.clear(std::memory_order_release);
+  auto done = false;
+  while (!done) {
+    while (lock.test_and_set(std::memory_order_acquire))
+      ;  // spin
+    if (cmds_.size() < 1000) {
+      cmds_.push(std::move(cmd));
+      done = true;
+    }
+    lock.clear(std::memory_order_release);
+    if (done || finish_thread_) {
+      break;
+    } else {
+      tr::yield_thread();
+    }
+  }
 }
 
 std::pair<bool, tr::cmd_uptr> tr::service::get_cmd() {
