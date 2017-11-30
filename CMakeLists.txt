@@ -7,9 +7,33 @@ add_subdirectory(benchmark)
 find_package (Threads)
 enable_testing()
 
-set (CMAKE_CXX_FLAGS "-std=c++11 -pthread ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
+set(CMAKE_CXX_FLAGS "-std=c++11 -pthread ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
+set(CMAKE_CXX_FLAGS_COVERAGE "-O0 -g --coverage")
+set(CMAKE_C_FLAGS_COVERAGE "-O0 -g --coverage")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_EXE_LINKER_FLAGS_COVERAGE "${CMAKE_EXE_LINKER_FLAGS_COVERAGE} --coverage")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		file(COPY "${CMAKE_SOURCE_DIR}/scripts/llvm-gcov.sh" 
+			 DESTINATION "${CMAKE_BINARY_DIR}/" 
+			 FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+  			 	GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+		file(COPY "${CMAKE_SOURCE_DIR}/scripts/clang_coverage.sh" 
+			 DESTINATION "${CMAKE_BINARY_DIR}/" 
+			 FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+  			 	GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	else()
+		file(COPY "${CMAKE_SOURCE_DIR}/scripts/gcc_coverage.sh" 
+			 DESTINATION "${CMAKE_BINARY_DIR}/" 
+			 FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+  			 	GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	endif()
+endif()
+
 include_directories("include")
 include_directories("benchmark/include")
 file(GLOB_RECURSE SOURCES "src/*.cpp" "include/*.h")
